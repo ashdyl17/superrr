@@ -4,8 +4,58 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 
-st.set_page_config(page_title="SupeRR Selector - Who Delivers When It Matters?", page_icon="🏏", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="SupeRR Selector - Who Delivers When It Matters?", page_icon="🏏", layout="wide", initial_sidebar_state="auto")
+
+# JS: inject a <style> tag directly into parent document head — bypasses Streamlit CSS scoping
+components.html("""
+<script>
+function patchSidebarToggle() {
+  var doc = window.parent.document;
+
+  // Inject persistent style tag into parent <head>
+  if (!doc.getElementById('superrr-toggle-fix')) {
+    var s = doc.createElement('style');
+    s.id = 'superrr-toggle-fix';
+    s.textContent = [
+      '[data-testid="collapsedControl"]{background:#1E293B!important;border-radius:0 8px 8px 0!important;box-shadow:2px 2px 10px rgba(15,23,42,.3)!important;opacity:1!important;visibility:visible!important;display:flex!important;}',
+      '[data-testid="collapsedControl"] button{background:transparent!important;color:#fff!important;}',
+      '[data-testid="collapsedControl"] svg,[data-testid="collapsedControl"] button svg{color:#fff!important;fill:#fff!important;stroke:#fff!important;}',
+      '[data-testid="stSidebarCollapseButton"] button,[data-testid="stSidebarHeader"] button{background:#334155!important;border-radius:6px!important;color:#fff!important;}',
+      '[data-testid="stSidebarCollapseButton"] button svg,[data-testid="stSidebarHeader"] button svg{color:#fff!important;fill:#fff!important;}',
+      '[data-testid="stSidebarCollapseButton"] button:hover,[data-testid="stSidebarHeader"] button:hover{background:#475569!important;}'
+    ].join('');
+    doc.head.appendChild(s);
+  }
+
+  // Also directly style any existing elements right now
+  var selectors = [
+    '[data-testid="collapsedControl"]',
+    '[data-testid="collapsedControl"] button',
+    '[data-testid="stSidebarCollapseButton"] button',
+    '[data-testid="stSidebarHeader"] button'
+  ];
+  selectors.forEach(function(sel) {
+    doc.querySelectorAll(sel).forEach(function(el) {
+      el.style.setProperty('background-color', '#1E293B', 'important');
+      el.style.setProperty('color', '#ffffff', 'important');
+      el.style.setProperty('opacity', '1', 'important');
+      el.style.setProperty('visibility', 'visible', 'important');
+    });
+    doc.querySelectorAll(sel + ' svg, ' + sel + 'svg').forEach(function(el) {
+      el.style.setProperty('color', '#ffffff', 'important');
+      el.style.setProperty('fill', '#ffffff', 'important');
+    });
+  });
+}
+
+// Run immediately, then watch for Streamlit re-renders
+patchSidebarToggle();
+var obs = new MutationObserver(patchSidebarToggle);
+obs.observe(window.parent.document.body, { childList: true, subtree: true });
+</script>
+""", height=0)
 
 BLUE, GREEN, ORANGE, RED, INDIGO, TEAL, GREY = "#2563EB", "#059669", "#D97706", "#E11D48", "#6366F1", "#0D9488", "#64748B"
 LAYERS = ["L1 Pressure vs usual", "L2 Behavioural", "L3 Stakes wins vs expected", "L4 Selection trust", "L5 Evidence depth", "L6 Stakes-weighted awards"]
@@ -103,30 +153,21 @@ html, body { overflow-x: hidden !important; }
   color: #E2E8F0 !important;
   font-weight: 500;
 }
-/* ── Permanently lock the sidebar open — hide every collapse/toggle control ── */
-/* The expand arrow that appears in the top-left when sidebar is collapsed */
-[data-testid="collapsedControl"]          { display: none !important; }
-/* The chevron button rendered inside the sidebar header area */
-[data-testid="stSidebarCollapseButton"]   { display: none !important; }
-/* Streamlit ≥1.30 wraps it in stSidebarHeader */
-[data-testid="stSidebarHeader"] button    { display: none !important; }
-/* Catch-all: any button whose aria-label mentions sidebar */
-button[aria-label="Close sidebar"]        { display: none !important; }
-button[aria-label="Collapse sidebar"]     { display: none !important; }
-button[aria-label="Open sidebar"]         { display: none !important; }
-/* Lock sidebar width so it never collapses */
-section[data-testid="stSidebar"] {
-  min-width: 240px !important;
-  max-width: 240px !important;
-  width:     240px !important;
-  transform: none !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
+/* ── Sidebar toggle — visible on white background ── */
+[data-testid="collapsedControl"] {
+  background-color: #1E293B !important;
+  border-radius: 0 8px 8px 0 !important;
+  box-shadow: 2px 2px 8px rgba(15,23,42,0.2) !important;
 }
-/* Prevent the sidebar from being hidden via translateX */
-section[data-testid="stSidebar"] > div {
-  transform: none !important;
-}
+[data-testid="collapsedControl"] button { background: transparent !important; color: #FFFFFF !important; }
+[data-testid="collapsedControl"] svg,
+[data-testid="collapsedControl"] button svg { color: #FFFFFF !important; fill: #FFFFFF !important; }
+[data-testid="stSidebarCollapseButton"] button,
+[data-testid="stSidebarHeader"] button { background-color: #334155 !important; border-radius: 6px !important; color: #FFFFFF !important; }
+[data-testid="stSidebarCollapseButton"] button svg,
+[data-testid="stSidebarHeader"] button svg { color: #FFFFFF !important; fill: #FFFFFF !important; }
+[data-testid="stSidebarCollapseButton"] button:hover,
+[data-testid="stSidebarHeader"] button:hover { background-color: #475569 !important; }
 
 /* Sidebar divider */
 [data-testid="stSidebar"] hr {
